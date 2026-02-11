@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super ABC World 🌍</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Nunito:wght@400;700&display=swap"
+    rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    h1,
+    h2,
+    .game-font {
+      font-family: 'Luckiest Guy', cursive;
+      letter-spacing: 2px;
+    }
+
+    /* Animaciones Personalizadas */
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-15px);
+      }
+    }
+
+    .animate-float {
+      animation: float 4s ease-in-out infinite;
+    }
+
+    @keyframes pulse-glow {
+
+      0%,
+      100% {
+        filter: drop-shadow(0 0 10px rgba(250, 204, 21, 0.5));
+        transform: scale(1);
+      }
+
+      50% {
+        filter: drop-shadow(0 0 25px rgba(250, 204, 21, 1));
+        transform: scale(1.1);
+      }
+    }
+
+    .score-pulse {
+      animation: pulse-glow 1s infinite;
+    }
+
+    .glass-card {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    /* Gradiente de fondo animado */
+    .animated-bg {
+      background: linear-gradient(-45deg, #0f172a, #1e1b4b, #312e81, #0f172a);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+
+    @keyframes gradientBG {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+  </style>
+</head>
+
+<body class="animated-bg text-white h-screen w-screen flex flex-col items-center relative">
+
+  <div id="top-bar" class="w-full p-4 flex justify-between items-center z-50 hidden">
+    <button onclick="goHome()"
+      class="bg-red-500 hover:bg-red-600 text-white p-3 rounded-full shadow-lg border-4 border-red-700 transition transform hover:scale-110">
+      🏠 SALIR
+    </button>
+
+    <div class="flex flex-col items-center">
+      <div
+        class="bg-slate-900/80 px-8 py-2 rounded-3xl border-4 border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.4)] transform hover:scale-105 transition">
+        <span class="text-yellow-400 text-2xl font-bold mr-2">PUNTOS</span>
+        <span id="score-display" class="game-font text-6xl text-white drop-shadow-md">0</span>
+      </div>
+    </div>
+
+    <button onclick="toggleFullScreen()"
+      class="bg-blue-500 hover:bg-blue-600 p-3 rounded-full shadow-lg border-4 border-blue-700 transition transform hover:scale-110 text-xl">
+      📺
+    </button>
+  </div>
+
+  <div id="sticker-area"
+    class="absolute top-24 w-full flex justify-center gap-4 pointer-events-none z-0 px-4 flex-wrap opacity-80">
+  </div>
+
+  <div id="menu"
+    class="absolute inset-0 flex flex-col items-center justify-center z-40 space-y-6 bg-slate-900/90 backdrop-blur-sm transition-all duration-500">
+    <div class="animate-float text-center">
+      <h1
+        class="text-7xl md:text-9xl text-transparent bg-clip-text bg-gradient-to-br from-yellow-300 via-orange-400 to-pink-500 drop-shadow-2xl pb-4">
+        ABC World
+      </h1>
+      <p class="text-2xl text-blue-200 font-bold">¡Aprende y Gana Premios! 🏆</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl px-8 mt-8">
+      <button onclick="startGame('visual')"
+        class="glass-card hover:bg-indigo-600/50 rounded-3xl p-6 group transition-all transform hover:-translate-y-2 hover:border-indigo-400 text-left relative overflow-hidden">
+        <div class="absolute -right-4 -bottom-4 text-9xl opacity-20 group-hover:scale-110 transition">🅰️</div>
+        <div class="text-5xl mb-2">👀</div>
+        <h3 class="text-3xl font-bold text-indigo-300">Veo Veo Letras</h3>
+        <p class="text-gray-300 text-lg">Mira la letra y tócala en el teclado.</p>
+      </button>
+
+      <button onclick="startGame('magic')"
+        class="glass-card hover:bg-emerald-600/50 rounded-3xl p-6 group transition-all transform hover:-translate-y-2 hover:border-emerald-400 text-left relative overflow-hidden">
+        <div class="absolute -right-4 -bottom-4 text-9xl opacity-20 group-hover:scale-110 transition">🦁</div>
+        <div class="text-5xl mb-2">✨</div>
+        <h3 class="text-3xl font-bold text-emerald-300">Teclado Mágico</h3>
+        <p class="text-gray-300 text-lg">¡Toca teclas y descubre sorpresas!</p>
+      </button>
+    </div>
+
+    <p class="text-gray-500 mt-8 text-sm">Versión 3.0 - Hecha con ❤️ para tu Peque</p>
+  </div>
+
+  <div id="game-stage" class="hidden flex-col items-center justify-center w-full h-full relative z-10">
+
+    <div class="relative flex flex-col items-center justify-center transform transition-all duration-300">
+      <div id="main-item"
+        class="game-font text-[14rem] md:text-[22rem] leading-none drop-shadow-[0_0_50px_rgba(255,255,255,0.3)] select-none">
+        ?
+      </div>
+
+      <div id="sub-text" class="text-4xl md:text-6xl font-bold mt-4 h-20 text-center transition-opacity duration-300">
+      </div>
+    </div>
+
+    <div id="feedback"
+      class="absolute bottom-20 text-5xl font-bold text-white bg-green-500 px-12 py-4 rounded-full shadow-2xl opacity-0 transform scale-50 transition-all duration-300">
+      ¡Genial! 🌟
+    </div>
+  </div>
+
+  <div id="reward-modal"
+    class="hidden fixed inset-0 z-[100] bg-black/80 flex flex-col items-center justify-center text-center p-4 backdrop-blur-md">
+    <h2 class="text-6xl text-yellow-400 mb-8 animate-bounce">¡PREMIO! 🎁</h2>
+    <div id="reward-emoji" class="text-[10rem] animate-float">🦄</div>
+    <p class="text-3xl text-white mt-4 font-bold">¡Ganaste un nuevo amigo!</p>
+    <button onclick="closeReward()"
+      class="mt-10 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-12 py-5 rounded-full text-3xl font-bold shadow-lg hover:scale-105 transition">
+      ¡SEGUIR JUGANDO!
+    </button>
+  </div>
+
+  <script>
+    // --- ⚙️ CONFIGURACIÓN Y DATOS ---
+    const dictionary = {
+      'A': { w: 'Avión', e: '✈️' }, 'B': { w: 'Barco', e: '⛵' }, 'C': { w: 'Carro', e: '🚗' },
+      'D': { w: 'Dinosaurio', e: '🦕' }, 'E': { w: 'Elefante', e: '🐘' }, 'F': { w: 'Flor', e: '🌻' },
+      'G': { w: 'Gato', e: '🐱' }, 'H': { w: 'Hamburguesa', e: '🍔' }, 'I': { w: 'Iglú', e: '❄️' },
+      'J': { w: 'Jirafa', e: '🦒' }, 'K': { w: 'Koala', e: '🐨' }, 'L': { w: 'Luna', e: '🌙' },
+      'M': { w: 'Manzana', e: '🍎' }, 'N': { w: 'Naranja', e: '🍊' }, 'O': { w: 'Oso', e: '🐻' },
+      'P': { w: 'Pato', e: '🦆' }, 'Q': { w: 'Queso', e: '🧀' }, 'R': { w: 'Robot', e: '🤖' },
+      'S': { w: 'Sol', e: '☀️' }, 'T': { w: 'Tigre', e: '🐯' }, 'U': { w: 'Unicornio', e: '🦄' },
+      'V': { w: 'Vaca', e: '🐮' }, 'W': { w: 'Waffle', e: '🧇' }, 'X': { w: 'Xilófono', e: '🎹' },
+      'Y': { w: 'Yogur', e: '🥣' }, 'Z': { w: 'Zorro', e: '🦊' }
+    };
+
+    const rewards = ['🍭', '🎈', '🧸', '🚀', '🎨', '🕹️', '🧁', '🏎️', '🐶', '🍕'];
+    const colors = ['text-pink-400', 'text-cyan-400', 'text-yellow-400', 'text-green-400', 'text-purple-400', 'text-red-400'];
+
+    let gameState = {
+      mode: null, // 'visual' | 'magic'
+      score: 0,
+      target: '',
+      canInput: true,
+      stickers: 0
+    };
+
+    // --- 🔊 AUDIO ENGINE ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function speak(text, priority = false) {
+      if (priority) window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'es-ES';
+      u.rate = 0.9;
+      u.pitch = 1.1;
+      window.speechSynthesis.speak(u);
+    }
+
+    function playSound(type) {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      const now = audioCtx.currentTime;
+
+      if (type === 'success') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.linearRampToValueAtTime(880, now + 0.1);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+        osc.start(now);
+        osc.stop(now + 0.5);
+      } else if (type === 'pop') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      }
+    }
+
+    // --- 🎮 CONTROL DEL JUEGO ---
+    function startGame(mode) {
+      gameState.mode = mode;
+      gameState.score = 0;
+      gameState.stickers = 0;
+      updateScoreUI();
+      document.getElementById('sticker-area').innerHTML = ''; // Limpiar stickers
+
+      document.getElementById('menu').classList.add('hidden'); // Ocultar menú
+      document.getElementById('game-stage').classList.remove('hidden'); // Mostrar juego
+      document.getElementById('game-stage').classList.add('flex');
+      document.getElementById('top-bar').classList.remove('hidden'); // Mostrar barra puntos
+      document.getElementById('top-bar').classList.add('flex');
+
+      if (mode === 'visual') {
+        nextRoundVisual();
+      } else {
+        setupMagicMode();
+      }
+    }
+
+    function goHome() {
+      window.speechSynthesis.cancel();
+      document.getElementById('game-stage').classList.add('hidden');
+      document.getElementById('game-stage').classList.remove('flex');
+      document.getElementById('top-bar').classList.add('hidden');
+      document.getElementById('top-bar').classList.remove('flex');
+      document.getElementById('menu').classList.remove('hidden');
+    }
+
+    function updateScoreUI() {
+      const el = document.getElementById('score-display');
+      el.innerText = gameState.score;
+      // Animación de pulso
+      el.classList.remove('score-pulse');
+      void el.offsetWidth; // Trigger reflow
+      el.classList.add('score-pulse');
+    }
+
+    // --- MODO 1: VISUAL (Veo Veo) ---
+    function nextRoundVisual() {
+      gameState.canInput = true;
+      const abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      gameState.target = abc[Math.floor(Math.random() * abc.length)];
+
+      const main = document.getElementById('main-item');
+      const sub = document.getElementById('sub-text');
+
+      main.innerText = gameState.target;
+      main.className = `game-font text-[14rem] md:text-[22rem] leading-none drop-shadow-lg transition-all duration-300 ${colors[Math.floor(Math.random() * colors.length)]}`;
+      sub.innerText = ""; // Limpiar texto anterior
+
+      speak(gameState.target);
+    }
+
+    function checkVisual(key) {
+      if (!gameState.canInput) return;
+
+      if (key === gameState.target) {
+        // Acierto
+        gameState.canInput = false;
+        gameState.score++;
+        updateScoreUI();
+        playSound('success');
+        showFeedback(true);
+        confetti({ origin: { y: 0.7 }, particleCount: 30, spread: 50 });
+
+        // Animación de la letra
+        const main = document.getElementById('main-item');
+        main.style.transform = "scale(1.3) rotate(10deg)";
+        setTimeout(() => main.style.transform = "scale(1) rotate(0deg)", 300);
+
+        checkReward(); // ¿Ganó premio?
+
+        setTimeout(nextRoundVisual, 1500);
+      } else {
+        // Error suave
+        speak(`Esa es la ${key}. Busca la ${gameState.target}`);
+      }
+    }
+
+    // --- MODO 2: MAGIC (Teclado Mágico) ---
+    function setupMagicMode() {
+      document.getElementById('main-item').innerText = "⌨️";
+      document.getElementById('sub-text').innerText = "Toca las teclas...";
+      speak("Bienvenido al teclado mágico");
+    }
+
+    function triggerMagic(key) {
+      const data = dictionary[key];
+      if (!data) return;
+
+      const main = document.getElementById('main-item');
+      const sub = document.getElementById('sub-text');
+
+      main.innerText = data.e; // Emoji
+      sub.innerText = `${key} de ${data.w}`;
+      sub.className = `text-4xl md:text-6xl font-bold mt-4 h-20 text-center ${colors[Math.floor(Math.random() * colors.length)]}`;
+
+      playSound('pop');
+      speak(`${key}... ${data.w}`);
+
+      // Efecto visual
+      main.animate([
+        { transform: 'scale(0.5)', opacity: 0 },
+        { transform: 'scale(1.2)', opacity: 1 },
+        { transform: 'scale(1)', opacity: 1 }
+      ], { duration: 400, easing: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)' });
+    }
+
+    // --- SISTEMA DE PREMIOS 🎁 ---
+    function checkReward() {
+      if (gameState.score > 0 && gameState.score % 5 === 0) {
+        // Toca premio cada 5 puntos
+        const sticker = rewards[gameState.stickers % rewards.length];
+        gameState.stickers++;
+
+        // Mostrar Sticker en la barra
+        const s = document.createElement('span');
+        s.innerText = sticker;
+        s.className = "text-4xl animate-bounce";
+        document.getElementById('sticker-area').appendChild(s);
+
+        // Abrir Modal
+        document.getElementById('reward-emoji').innerText = sticker;
+        document.getElementById('reward-modal').classList.remove('hidden');
+        document.getElementById('reward-modal').classList.add('flex');
+
+        playSound('success');
+        confetti({ particleCount: 150, spread: 100 });
+        speak("¡Increíble! Ganaste un premio sorpresa.");
+      }
+    }
+
+    function closeReward() {
+      document.getElementById('reward-modal').classList.add('hidden');
+      document.getElementById('reward-modal').classList.remove('flex');
+    }
+
+    function showFeedback() {
+      const fb = document.getElementById('feedback');
+      fb.classList.remove('opacity-0', 'scale-50');
+      fb.classList.add('opacity-100', 'scale-110');
+      setTimeout(() => {
+        fb.classList.add('opacity-0', 'scale-50');
+        fb.classList.remove('opacity-100', 'scale-110');
+      }, 1000);
+    }
+
+    // --- UTILS ---
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    // --- INPUT GLOBAL ---
+    document.addEventListener('keydown', (e) => {
+      const gameStage = document.getElementById('game-stage');
+      if (gameStage.classList.contains('hidden')) return; // No jugar si estamos en menú
+
+      const key = e.key.toUpperCase();
+      if (!/^[A-Z]$/.test(key)) return;
+
+      if (gameState.mode === 'visual') checkVisual(key);
+      if (gameState.mode === 'magic') triggerMagic(key);
+    });
+
+    // Habilitar audio con primer clic
+    document.body.addEventListener('click', () => { if (audioCtx.state === 'suspended') audioCtx.resume(); }, { once: true });
+
+  </script>
+</body>
+
+</html>
